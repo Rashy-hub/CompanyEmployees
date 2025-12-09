@@ -1,0 +1,161 @@
+- Creation du projet ASP.NET web API en .NET 8 
+- Changer launchsettings pour mettre à false launchBrowser (pas besoin c'est une api => pas de vue)
+- Creation de la methode d'extension de ICollectionService pour ConfigureCors dans la class Extensions/ServiceExtensions.cs
+- Creation de la methode d'extension de ICollectionService pour ConfigureIIS dans la class Extensions/ServiceExtensions.cs
+- Ajouter le midleware HSTS pour l'environnement prod et le midlleware UseDeveloperExceptionPage pour l'env dev
+- Ajouter le midlleware pour fournir les fichier static sur wwwroot par défaut et le middleware pour forwarded l'IP de la source (si il y'a un proxy)
+- Et pas oublier évidemment d'ajouter le middleware UseCors qui a été précedement configuré en tant que service
+
+- Creation de deux projet dans la solution principale : LoggerService (infrastructure layer) et Contracts (class library project : qui contiendra les interfaces entres les couches)
+- Ajouter la reference projet Contracts au projet LoggerService
+- Ajouter la reference de LoggerService au projet main (CompanyEmployees) aussi
+- Creation de l'interface ILoggerManager dans le projet Contracts
+- Installation du package Nuget NLog pour le projet LoggerService
+- Creation de la classe LoggerManager.cs dans le projet LoggerService
+- Implementation de LoggerManager.cs qui utilise NLog avec getCurrentClasslogger et l'interface de NLog ILogger (simple wrapper)
+- Creation du nlog.config dans le main project (permet de configurer la localisation des logs)
+- Charger la config dans le main avec LogManager.Setup().LoadConfigurationFromFile() de Nlog
+- Creation de la methode d'extension de ICollectionService pour ConfigureLoggerService() en tant que Singleton dans la class Extensions/ServiceExtensions.cs
+- Ajouter le service du logger dans le main juste aprés cors et IIS services 
+
+- Creation d'un nouveau projet "Entities" qui sera la couche domain et un nouveau dossier Models qui contiendra les entité de EF Core
+- Creation des models Company et Employee (relation one to many)
+
+- Creation d'un nouveau projet "Repository" (contexte de la base de donné avec le repository pattern) et ajouter une reference pour "Entities" project
+- Installer package Nuget Microsoft.EntityFrameWorkCOre version 8 pour le projet Repository
+- Creation de la classe RepositoryContext.cs qui va herité de DbContext de EFCore
+- Modifier le constructeur de RepositoryContext afin qu'il prenne DbContextOptions en parametre et le transmet à son parent (DbContext)
+- Ajouter les tables sous formes de propriété DbSet pour Employee et Company entities
+- Ajouter la connection string pour SQL dans appsettings.json
+- Ajouter la reference du "Repository" project au main project "CompanyEmployee"
+- Création d’un dossier ContextFactory dans le projet principal et ajout de la classe RepositoryContextFactory.
+  => Nécessaire parce que le RepositoryContext (DbContext) se trouve dans un autre projet.EF Core ne peut pas l’instancier automatiquement lors des migrations.
+     On implémente IDesignTimeDbContextFactory<RepositoryContext> pour expliquer à EF Core comment créer le DbContext à design-time :
+        - Charger appsettings.json à la main grace à la classe ConfigurationBuilder
+        - Récupérer la connection string “sqlConnection”
+        - Construire les DbContextOptions avec le provider UseSqlServer (faut installer le pacakge Microsoft.EntityFrameworkCore.SqlServer sur le main project)
+        - Génèrer les migrations dans le projet main "CompanyEmployees" au lieu de Repository (clean archi)
+        - Retourner une instance de RepositoryContext configurée
+     Sans cette factory, les commandes de migrations ne fonctionnent pas dans une structure multi-projets.
+- S'assurer que SQL express est installé sur la machine 
+- Installer Microsoft.EntityFrameworkCore.Tools puis créer la premiére migration "Add-Migration DataBaseCreation" in design time puis appliquer la migration avec Update-Database (avec TrustServerCertificate=True;)
+
+- Creation d'un dossier "Configuration" dans le projet "Repository" afin contenir les classes EmployeeConfiguration et CompanyConfiguration servant à faire un data seed
+- Implementer l'interface IEntityTypeConfiguration<> pour les deux classes de seed avec des données cohérente
+- Modifier la class RepositoryContext afin de pouvoir utiliser le data seed en override la methode onModelCreating et utiliser ApplyConfiguration 
+- Ajouter la migration InitialData (le seed) et update la database 
+ 
+- Creation de l'interface generique IRepositoryBase<T>  dans le projet "Contracts" et ajouter à la reference de projet contracts au projet Repository
+- Creation de la classe abstraite RepositoryBase qui va implémenté l'interface IRepositoryBase<T> pour travailler sur notre RepositoryContext
+- INFO : Cette technique ne sauve pas dans la DB, elle ne fait qu'insérer dans le tracking context. l'idée c'est de séparé logique metier et data tout en apportant un usage testable, generic et extenstible MAIS c'est dependant de EF Core
+- Creation des interfaces ICompanyRepository et IEmployeeRepository dans le projet "contracts"
+- Creation des classes CompanyRepository et EmployeeRepository qui vont implémenter RepositoryBase<T> et les interfaces associés 
+- Création de IRepositoryManager dans Contracts et de la classe sealed RepositoryManager dans Repository
+  =>Objectif : centraliser l’accès à tous les repositories spécifiques (Employee, Company, etc.) via une seule classe injectable
+  - Les repositories sont exposés via des propriétés (Company, Employee) pour que tous les controllers puissent y accéder facilement
+  - Utilisation de Lazy<T> pour la lazy initialization : chaque repository n’est instancié que lorsqu’il est utilisé pour la première fois, ce qui économise des ressources et améliore la performance
+  - La méthode Save() permet d’appliquer toutes les modifications en une seule transaction (Add, Update, Delete) pour garantir la cohérence et permettre un rollback si une opération échoue
+  - Avantage : on peut effectuer plusieurs opérations sur différentes entités et n’appeler Save() qu’une seule fois, ce qui simplifie la gestion des transactions et réduit le risque d’erreurs
+- Cration de la methode d'extension ConfigureRepositoryManager en scoped et modifier Program.cs pour rajouter le service
+- Creation d'un nouveau projet Service.Contracts pour y mettre les interfaces de nos services et aussi IServiceManager
+- Creation d'un nouveau projet Service qui contient l'implementation des services EmployeeService et CompanyService (on y injecte le repository manager et le logger manager via le ServiceManager)
+- Implementation de ServiceManager dans le projet Service (Lazy load + injection des dependances à passer aux different services )
+- Creation de la methode d'extension ConfigureServiceManager en scoped et modifier Program.cs pour y rajouter le service
+- Creation de la methode d'extension ConfigureSqlContext via AddSQLServer et la config de notre connection string (utile pour avoir le RepositoryContext enregistré au runtime)
+
+- Creation d'un nouveau projet "CompanyEmployees.Presentation" contenant une class static vide AssemblyReference (qui nous servira à referencer l'assembly dans le main )
+- Referencer Service.Contracts dans CompanyEmployees.Presentation et Referencer  CompanyEmployees.Presentation dans le main
+- Supprimer le dossier Controllers dans le main et modifier AddControllers (pour lui donner l'assembly correct ) dans Program.cs (on utilise AddAssemblyPart avec typeof de la class static AssemblyReference)
+- Installation du package MVC.Core et creation du dossier Controllers dans "Presentation" project 
+
+        **A partir d'ici ce qui suit s'applique aussi pour Employee (avec quelques subtilité car employee est une ressource dite dependante de company)**
+- Creation du premier controller CompaniesController heritant de ControllerBase
+- Ajouter les decorateurs [ApiController] et [Route="api/[controller]"] au CompaniesController (page 57)
+- Modifier l'interface ICompanyRepository pour ajouter la methode GetAllCompanies qui renvoie un IEnumerable<Company> et qui prend en paramétre bool trackChanges (utile pour EF Core)
+- Implementer GetAllCompanies qui va appeler FindAll de RepositoryBase (pas oublier le .ToList() pour executer réelement la query)
+- Modifier l'interface ICompanyService pour aussi ajouter une methode GetAllCompanies (similaire à celle du repo) tout en oubliant pas d'ajouter la reference de Entities à Services.Contracts 
+- Implementer CompanyService.GetAllCompanies qui se contente d'appeler CompanyRepository.GetAllCompanies pour l'instant
+- Ajouter  l'action IActionResult GetCompanies au CompaniesController afin d'appeler le service associé via le service manager et return Ok() du resultat
+
+- Creation du projet Shared contenant le dossier DataTransferObjects pour y contenir nos DTO
+- Ajout de la reference Shared au projet Services et Services.Contracts
+- Cration du premier DTO CompanyDto sous forme de record (un genre de classe en lecture seul - immutable )
+- Installation du package AutoMapper dans le projet Service 
+- Creation du dossier MapperProfiles dans le projet Service contenant la class MapperConfig
+- Implementation de MapperConfig qui herite de Profile (de AutoMapper) et qui via son constructeur utilise les CreateMap pour generer les schéma de mapping
+- Ajout dans Program.cs via le container de service de "AddAutoMapper(cfg=>cfg.AddMaps(typeof(MapperConfig)),typeof(MapperConfig).Assembly)";
+- Injecter IMapper (interface de AutoMapper) dans les Services Via le service manager
+- Modifier les services (CompanyService) pour que les methodes tel que GetAllCompanies renvoie un DTO via _mapper.Map<source,destination>()
+
+- Creation du dossier ErrorModel dans le projet Entities qui contiendra la class du meme nom qui sera le model des erreurs de notre API
+- Implementation de la class ErrorModel contenant les propriété StatusCode et Message mais aussi un ovverride de ToString() afin de serialisé directement en JSON 
+- Creation dans le main , dans le dossier Extensions de ExceptionMiddlewareExtension (gestion global des erreurs nous permettant de nous affranchir des try catch dans services et controller)
+- Ajout de la methode d'extension de WebApplication (app) dans ExceptionMiddlewareExtension dénomé ConfigureExceptionHandler
+- Implementation de la methode d'extension qui va appeler UseExceptionHandler en créant un pipeline secondaire de gestion des erreurs api (implémentation complexe à revoir)
+- Modification de Program.cs afin de pré-charger le logger (via GetRequiredService ) pour l'injecter en paramétre à app.ConfigureExceptionHandler(logger) (attention à l'ordre , ce middleware doit être just aprés builder.Build())
+- Modification du ExceptionMiddlewareExtension afin de faire du pattern matching du type d'erreur sur base de nos exceptions (voir l'implémentation pour mieux comprendre)
+- Creation du dossier Exceptions dans le projet "Entities" qui contiendra nos differentes class d'exception (erreur not found ou autre)
+- Creation de l' abstract class NotFoundException qui herite de Exception (avec le constructeur on transmet via base le message d'erreur) et creation des sealed class exceptions custom tel que CompanyNotFoundExceptions
+
+- Implementation de GetCompany (getting a single ressource ) c'est pas si different de ce qu'on a fait jusque là en dehors de l'usage de .SingeOrDefault dans le Repository
+- Implementation des get single  et get all de la ressource enfant employee (relation parent enfant directement dans l'URL) , il faut juste prendre en compte la structure de la route sinon c'est pas si different
+=> Mofication/Ajout necessaire les interfaces d'abord puis les class : le DTO , le Map Profile , les exceptions , le repository , le service puis enfin le controlleur ensuite on peut tester le endpoint avec postman ou insomnia
+
+- Pour activer le content type negotiation il faut d'abord modifier ceci dans program.cs : builder.Services.AddControllers((config)=>config.RespectBrowserAcceptHeader=true).AddXmlDataContractSerializerFormatters()
+=> Petite subtilité , il ne faut pas utiliser de record par constructeur si on souhaite un XML lisible , directement utiliser le record comme une classe avec init à la place du set
+- Dans la config de AddControllers il est possible de renvoyer une erreur 406 (not supported media type  ) en ajoutant cette ligne config.ReturnHttpNotAcceptable = true;
+
+- Creation de la class CsvOutputFormmatter : il s'agit custom output csv formatter qui herite de TextOutputFormatter , l'implémentation étant fort specific il n'est pas necessaire de connaitre par coeur
+=> Il existe des output et des input formatter , c'est un moyen pour les controller de "formatter" directement (en parsant ou convertissant) des données entrante ou sortante
+- Ajouter la methode d'extention IMvcBuilder AddCustomOutputFormatter(this IMvcBuilder builder) et avec AddMvcOptions rajouter notre formateur à la collection
+- Modifier Program.cs et la methode AddController afin d'ajouter .AddCustomOutputFormatter() juste aprés les built in media formatters (tel que le XML)
+
++ Implementation des POST : il y'a 4 cas : le post d'une ressource parent unique , le post  d'une ressource enfant , le post d'une collecion de ressources parents et le post simultané d'une ressource parente avec sa collection de ressources enfants
+
+=> 1er cas - single parent creation: 
+
+- Creation de CompanyForCreationDto (pas besoin de l'ID il sera crée coté db) ,
+- Ajouter la propriété Name=""CompanyforId" à l'attribut [HttpGet] de l'action GetCompany afin de pouvoir l'utiliser plus tard pour renvoyer la ressource nouvellement crée (CreatedAtRoute)
+- Ajouter le map profil "CreateMap<CompanyForCreationDto, Company>()" 
+- Modification de ICompanyRepository : void CreateCompany(Company company) 
+- Implementation de void CreateCompany(Company company)  dans CompanyRepository (simple)
+- Modification de ICompanyService : CompanyDto CreateCompany(CompanyForCreationDto company) : donc il faut renvoyer un companyDto (avec id ) afin de notifier le user de sa creation (status 201)
+- Implementation de CompanyService : on map companyForCreationDto vers l'entité puis on  crée et on save avec le repo et pour finir on remap l'entité vers companyDto (output DTO) 
+- Modification de CompaniesController afin de géré la creation transmise par input DTO [FromBody] et on oublie pas le CreatedAtRoute afin de renvoyer l'output DTO avec l'Id de la ressource nouvellement crée
+=> l'avantage c'est qu'avec CreatedAtRoute on aura dans le header 	"http://localhost:5000/api/Companies/ae99b3f0-fb23-4635-75d2-08de34fa2d64"  un lien vers la ressource nouvellement crée
+- Modification des options de AddControllers afin de ne pas utiliser le built in model validation du à [ApiController ] :.Configure<ApiBehaviorOptions>(options =>{options.SuppressModelStateInvalidFilter = true;
+
+
+=> 2ème cas – single child creation:
+
+- Creation du input DTO sous forme de record EmployeeForCreationDto (pas besoin de CompanyId, il arrive via la route `[Route("api/companies/{companyId}/employees")]`)
+- Ajouter Name = "GetEmployeeForCompany" pour l'action GetEmployeeForCompany
+- Modification de l’interface IEmployeeRepository en ajoutant la méthode : CreateEmployeeForCompany(Guid companyId, Employee employee)
+- Implémentation dans EmployeeRepository : assigner le companyId reçu en paramètre à l’entité Employee puis appeler la méthode Create héritée de RepositoryBase (simple, même logique que pour Company)
+- Ajouter le mapping dans le MapperProfile : CreateMap<EmployeeForCreationDto, Employee>()
+- Modification de l’interface IEmployeeService en ajoutant : EmployeeDto CreateEmployeeForCompany(Guid companyId, EmployeeForCreationDto employeeForCreation, bool trackChanges)
+- Implémentation côté EmployeeService :Attention il faut vérifier l’existence de la company (CompanyRepository.GetCompany)
+- Modification du EmployeesController (dans le projet Presentation) : Ajouter l’action POST correspondante prenant companyId + DTO en [FromBody] et pas oublier le CreatedAtROute pour renvoyer un lien de la res crée
+
+=> 3ème cas- single parent with children collection directly 
+
+- Etendre tout simplement CompanyForCreationDto en ajoutant un IEnumerable<EmployeeForCreationDto> à la fin ; EF Core et le mapping se charge de tout 
+
+=> 4ème cas – creation d’une collection de parents (Companies collection)
+
+- Ajouter dans ICompanyRepository la méthode permettant de récupérer plusieurs Company via liste d’ids :  IEnumerable<Company> GetByIds(IEnumerable<Guid> ids, bool trackChanges)
+- Implémentation dans CompanyRepository : utiliser FindByCondition + Contains(ids) puis ToList() - Attention le predicat utilise Contains au lieu de Equal pour la comparaison des Ids
+- Ajouter dans ICompanyService la méthode pour récupérer une collection via ids :IEnumerable<CompanyDto> GetByIds(IEnumerable<Guid> ids, bool trackChanges)
+- Implémentation côté CompanyService : Vérifier si ids est null => throw IdParametersBadRequestException , la quantité d’ids == quantité d’entités => sinon throw CollectionByIdsBadRequestException
+- Créer la hiérarchie d’exceptions spécifiques : BadRequestException : classe abstraite dérivant d’Exception IdParametersBadRequestException , CollectionByIdsBadRequestException
+- Ajouter la gestion de ces exceptions dans ConfigureExceptionHandler
+- Ajouter l’action GET dans CompaniesController et la nommé [HttpGet("collection/({ids?})", Name = "CompanyCollection")] 
+- Ajouter dans ICompanyService la méthode de création en collectionqui retourn un tuple  (IEnumerable<CompanyDto> companies, string ids) 
+- Implémentation CreateCompanyCollection dans CompanyService : pas oublier de Construire une string ids = string.Join(",", collectionIds) pour la renvoyer dans le tuple avec companies
+- Créer l’exception CompanyCollectionBadRequest héritant de BadRequestException 
+- Ajouter l’action POST dans CompaniesController :[HttpPost("collection")] à utiliser avec CreatedAtRoute comme d'hab (attention à bien construire )
+- Crreation d'un ArrayModelBinder:IModelBinder dans Presentation/ModelBinders pour résoudre le problème “415 Unsupported Media Type” (binding des ids dans l’URL) :
+  => ce binder transforme la string “id1,id2,id3” en IEnumerable<Guid> ,il est générique (fonctionne pour n’importe quel type T dans IEnumerable<T>  
+- Ajouter dans l’action GET collection le model binder :[ModelBinder(BinderType = typeof(ArrayModelBinder))] 
+
++ Implementation des DELETE (chapitre 10 )
