@@ -74,6 +74,8 @@ namespace Service
 
         public void UpdateEmployeeForCompany(Guid companyId, Guid id, EmployeeForUpdateDto employeeForUpdate, bool comptrackChanges, bool empTrackChanges)
         {
+            if (employeeForUpdate is null)
+                throw new EmployeeBadRequest();
             var company=_repository.CompanyRepository.GetCompanyById(companyId, comptrackChanges);
             if(company is null)
                 throw new CompanyNotFoundException(companyId);
