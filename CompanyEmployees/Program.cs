@@ -5,6 +5,8 @@ using CompanyEmployees.Extensions;
 using Contracts;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Formatters;
+using Microsoft.Extensions.Options;
 using NLog;
 using Service.MapperProfiles;
 
@@ -16,9 +18,21 @@ var builder = WebApplication.CreateBuilder(args);
 
 LogManager.Setup().LoadConfigurationFromFile(Path.Combine(Directory.GetCurrentDirectory(), "nlog.config"));
 
+
+
 // Add services to the container.
 
-builder.Services.AddControllers((config) => { config.RespectBrowserAcceptHeader = true; config.ReturnHttpNotAcceptable = true; }).AddXmlDataContractSerializerFormatters().AddCustomOutputFormatter().AddApplicationPart(typeof(CompanyEmployees.Presentation.AssemblyReference).Assembly);
+builder.Services.AddControllers(options =>
+{
+    options.RespectBrowserAcceptHeader = true;
+    options.ReturnHttpNotAcceptable = true;
+})
+.AddNewtonsoftJson()                     // nécessaire pour JSON Patch
+.AddNewtonsoftJsonPatchSupport()         // methode d'extension patch document formatter
+.AddXmlDataContractSerializerFormatters()
+.AddCustomOutputFormatter()
+.AddApplicationPart(typeof(CompanyEmployees.Presentation.AssemblyReference).Assembly);
+
 builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true);
 builder.Services.ConfigureCors();
 
