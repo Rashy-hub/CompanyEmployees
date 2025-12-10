@@ -60,7 +60,12 @@ namespace CompanyEmployees.Presentation.Controllers
             _manager.CompanyService.DeleteCompany(id, trackChanges: false);
             return NoContent();
         }
-
+        [HttpPut("{id:guid}")]
+        public IActionResult UpdateCompany(Guid id, [FromBody] CompanyForUpdateDto company )
+        {
+            _manager.CompanyService.UpdateCompany(id,company,trackChanges: true);
+            return NoContent();
+        }
 
     }
 }
