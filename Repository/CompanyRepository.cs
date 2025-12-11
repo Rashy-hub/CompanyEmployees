@@ -12,17 +12,17 @@ namespace Repository
 
         }
 
-        public async Task<IEnumerable<Company>> GetAllCompanies(bool trackChanges)
+        public async Task<IEnumerable<Company>> GetAllCompaniesAsync(bool trackChanges)
         {
             return await base.FindAll(trackChanges).OrderBy(c => c.Name).ToListAsync();
         }
-        public async Task<Company> GetCompanyById(Guid companyId, bool trackChanges)
+        public async Task<Company> GetCompanyByIdAsync(Guid companyId, bool trackChanges)
         {
 
             return await base.FindByCondition(c => c.Id.Equals(companyId), trackChanges).SingleOrDefaultAsync();
         }
 
-        public async Task<IEnumerable<Company>> GetCompaniesByIds(IEnumerable<Guid> Ids, bool trackChanges)
+        public async Task<IEnumerable<Company>> GetCompaniesByIdsAsync(IEnumerable<Guid> Ids, bool trackChanges)
         {
 
             return await base.FindByCondition(c => Ids.Contains(c.Id), trackChanges).ToListAsync();
