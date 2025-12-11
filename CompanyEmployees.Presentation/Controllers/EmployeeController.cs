@@ -59,8 +59,11 @@ namespace CompanyEmployees.Presentation.Controllers
                 return BadRequest("patchDoc object sent from client is null.");
             var result=_manager.EmployeeService.GetEmployeeForPatch(companyId,id,comptrackChanges:false,empTrackChanges:true);
             patchDoc.ApplyTo(result.employeeToPatch,ModelState);
+            //check also if employeeToPatch is valid for entity
+            TryValidateModel(result.employeeToPatch);
             if (!ModelState.IsValid)
                 return UnprocessableEntity(ModelState);
+
             _manager.EmployeeService.SaveChangesForPatch(result.employeeToPatch, result.employeeEntity);
             return NoContent();
         }
