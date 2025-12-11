@@ -1,25 +1,20 @@
 ﻿using Shared.DataTransferObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Service.Contracts
 {
     public interface ICompanyService
     {
-        IEnumerable<CompanyDto> GetAllCompanies(bool trackChanges);
-        CompanyDto GetCompanyById(Guid id , bool trackChanges);
+        Task<IEnumerable<CompanyDto>> GetAllCompaniesAsync(bool trackChanges);
+        Task<CompanyDto> GetCompanyByIdAsync(Guid id, bool trackChanges);
 
-        CompanyDto CreateCompany(CompanyForCreationDto company);
+        Task<CompanyDto> CreateCompanyAsync(CompanyForCreationDto company);
 
-        IEnumerable<CompanyDto> GetCompaniesByIds(IEnumerable<Guid> companyIds,bool trackChanges);
+        Task<IEnumerable<CompanyDto>> GetCompaniesByIdsAsync(IEnumerable<Guid> companyIds, bool trackChanges);
 
-        (IEnumerable<CompanyDto> companies , string ids) CreateCompanyCollection(IEnumerable<CompanyForCreationDto> companyCollection);
+        Task<(IEnumerable<CompanyDto> companies, string ids)> CreateCompanyCollectionAsync(IEnumerable<CompanyForCreationDto> companyCollection);
 
-        void DeleteCompany(Guid id,bool trackChanges);
+        Task DeleteCompanyAsync(Guid id, bool trackChanges);
 
-        void UpdateCompany(Guid id , CompanyForUpdateDto company,bool trackChanges);
+        Task UpdateCompanyAsync(Guid id, CompanyForUpdateDto company, bool trackChanges);
     }
 }
