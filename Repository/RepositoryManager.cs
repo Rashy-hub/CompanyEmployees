@@ -1,9 +1,4 @@
 ﻿using Contracts;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Repository
 {
@@ -18,8 +13,8 @@ namespace Repository
         public RepositoryManager(RepositoryContext context)
         {
             _repositoryContext = context;
-            _companyRepository= new Lazy<ICompanyRepository>(() => new CompanyRepository(context));
-            _employeeRepository= new Lazy<IEmployeeRepository>(() => new EmployeeRepository(context));
+            _companyRepository = new Lazy<ICompanyRepository>(() => new CompanyRepository(context));
+            _employeeRepository = new Lazy<IEmployeeRepository>(() => new EmployeeRepository(context));
         }
         public ICompanyRepository CompanyRepository => _companyRepository.Value;
 
@@ -27,7 +22,11 @@ namespace Repository
 
         public void Save()
         {
-           _repositoryContext.SaveChanges();
+            _repositoryContext.SaveChanges();
+        }
+        public async Task SaveAsync()
+        {
+            await _repositoryContext.SaveChangesAsync();
         }
     }
 }

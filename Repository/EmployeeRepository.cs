@@ -1,30 +1,26 @@
 ﻿using Contracts;
 using Entities.Models;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 
 namespace Repository
 {
-    internal class EmployeeRepository : RepositoryBase<Employee>,IEmployeeRepository
+    internal class EmployeeRepository : RepositoryBase<Employee>, IEmployeeRepository
     {
         public EmployeeRepository(RepositoryContext context) : base(context)
         {
         }
 
-        public IEnumerable<Employee> GetEmployees(Guid companyId,bool trackChanges)
+        public async Task<IEnumerable<Employee>> GetEmployees(Guid companyId, bool trackChanges)
         {
-            return base.FindByCondition(c=>c.CompanyId.Equals(companyId),trackChanges).ToList();
+            return await base.FindByCondition(c => c.CompanyId.Equals(companyId), trackChanges).ToListAsync();
         }
 
-        public Employee GetEmployee(Guid companyId,Guid employeeId,bool trackChanges)
+        public async Task<Employee> GetEmployee(Guid companyId, Guid employeeId, bool trackChanges)
         {
-            return base.FindByCondition(e => e.CompanyId.Equals(companyId) && e.Id.Equals(employeeId), trackChanges).SingleOrDefault();
+            return await base.FindByCondition(e => e.CompanyId.Equals(companyId) && e.Id.Equals(employeeId), trackChanges).SingleOrDefaultAsync();
         }
 
-        public void CreateEmployeeForCompany(Guid companyId,Employee employee)
+        public void CreateEmployeeForCompany(Guid companyId, Employee employee)
         {
             employee.CompanyId = companyId;
             base.Create(employee);

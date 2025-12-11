@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Contracts
+﻿namespace Contracts
 {
     public interface IRepositoryManager
     {
-       ICompanyRepository CompanyRepository { get; }
-       IEmployeeRepository EmployeeRepository { get; }
-       void Save();
+        ICompanyRepository CompanyRepository { get; }
+        IEmployeeRepository EmployeeRepository { get; }
+        void Save();
+        Task SaveAsync();
 
     }
 }
