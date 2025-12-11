@@ -41,7 +41,8 @@ namespace CompanyEmployees.Presentation.Controllers
         [HttpPost]
         public IActionResult CreateCompany([FromBody] CompanyForCreationDto company)
         {
-
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
             var companyDto = _manager.CompanyService.CreateCompany(company);
             return CreatedAtRoute("CompanyById", new { id = companyDto.Id }, companyDto);
         }
