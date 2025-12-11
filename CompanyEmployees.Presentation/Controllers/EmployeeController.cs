@@ -31,7 +31,8 @@ namespace CompanyEmployees.Presentation.Controllers
         [HttpPost]
         public IActionResult CreateEmployeeForCompany(Guid companyId, [FromBody] EmployeeForCreationDto employeeForCreationDto)
         {
-
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
             var result = _manager.EmployeeService.CreateEmployeeForCompany(companyId, employeeForCreationDto, trackChanges: false);
             return CreatedAtRoute("EmployeeById", new { companyId, id = result.Id }, result);
 
