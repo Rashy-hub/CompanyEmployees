@@ -1,4 +1,5 @@
-﻿using CompanyEmployees.Presentation.ModelBinders;
+﻿using CompanyEmployees.Presentation.ActionFilters;
+using CompanyEmployees.Presentation.ModelBinders;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
 using Shared.DataTransferObjects;
@@ -38,7 +39,7 @@ namespace CompanyEmployees.Presentation.Controllers
             return Ok(result);
         }
 
-        [HttpPost]
+        [HttpPost]        
         public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreationDto company)
         {
             if (!ModelState.IsValid)
@@ -48,6 +49,7 @@ namespace CompanyEmployees.Presentation.Controllers
         }
 
         [HttpPost("collection")]
+        [MaxCollectionSize(typeof(CompanyForCreationDto), 10)]
         public async Task<IActionResult> CreateCompanyCollection([FromBody] IEnumerable<CompanyForCreationDto> companies)
         {
 
@@ -64,6 +66,8 @@ namespace CompanyEmployees.Presentation.Controllers
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] CompanyForUpdateDto company)
         {
+            if(!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
             await _manager.CompanyService.UpdateCompanyAsync(id, company, trackChanges: true);
             return NoContent();
         }
