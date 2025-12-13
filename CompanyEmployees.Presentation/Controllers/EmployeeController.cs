@@ -48,6 +48,8 @@ namespace CompanyEmployees.Presentation.Controllers
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateEmployeeForCompany(Guid companyId, Guid id, [FromBody] EmployeeForUpdateDto employeeForUpdateDto)
         {
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
             await _manager.EmployeeService.UpdateEmployeeForCompanyAsync(companyId, id, employeeForUpdateDto, comptrackChanges: false, empTrackChanges: true);
             return NoContent();
         }
