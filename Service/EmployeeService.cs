@@ -44,9 +44,7 @@ namespace Service
 
         public async Task<EmployeeDto> CreateEmployeeForCompanyAsync(Guid companyId, EmployeeForCreationDto employeeForCreationDto, bool trackChanges)
         {
-            if (employeeForCreationDto is null)
-                throw new EmployeeBadRequest();
-
+          
             var company = await _repository.CompanyRepository.GetCompanyByIdAsync(companyId, trackChanges);
             if (company is null)
                 throw new CompanyNotFoundException(companyId);
@@ -74,8 +72,6 @@ namespace Service
 
         public async Task UpdateEmployeeForCompanyAsync(Guid companyId, Guid id, EmployeeForUpdateDto employeeForUpdate, bool comptrackChanges, bool empTrackChanges)
         {
-            if (employeeForUpdate is null)
-                throw new EmployeeBadRequest();
             var company = await _repository.CompanyRepository.GetCompanyByIdAsync(companyId, comptrackChanges);
             if (company is null)
                 throw new CompanyNotFoundException(companyId);
@@ -88,7 +84,7 @@ namespace Service
 
         }
 
-        public async Task<(EmployeeForUpdateDto employeeToPatch, Employee employeeEntity)> GetEmployeeForPatchAsync(Guid companyId, Guid id, bool comptrackChanges, bool empTrackChanges)
+        public async Task<(EmployeeForPatchDto employeeToPatch, Employee employeeEntity)> GetEmployeeForPatchAsync(Guid companyId, Guid id, bool comptrackChanges, bool empTrackChanges)
         {
             var company = await _repository.CompanyRepository.GetCompanyByIdAsync(companyId, comptrackChanges);
             if (company is null)
@@ -96,14 +92,14 @@ namespace Service
             var employeeEntity = await _repository.EmployeeRepository.GetEmployeeAsync(companyId, id, empTrackChanges);
             if (employeeEntity is null)
                 throw new EmployeeNotFoundException(id);
-            var employeeToPatch = _mapper.Map<EmployeeForUpdateDto>(employeeEntity);
+            var employeeToPatch = _mapper.Map<EmployeeForPatchDto>(employeeEntity);
 
             return (employeeToPatch: employeeToPatch, employeeEntity: employeeEntity);
 
 
         }
 
-        public async Task SaveChangesForPatchAsync(EmployeeForUpdateDto employeeToPatch, Employee employeeEntity)
+        public async Task SaveChangesForPatchAsync(EmployeeForPatchDto employeeToPatch, Employee employeeEntity)
         {
             _mapper.Map(employeeToPatch, employeeEntity);
             await _repository.SaveAsync();

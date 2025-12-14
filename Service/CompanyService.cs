@@ -40,8 +40,6 @@ namespace Service
 
         public async Task<CompanyDto> CreateCompanyAsync(CompanyForCreationDto company)
         {
-            if (company is null)
-                throw new CompanyBadRequest();
             var companyEntity = _mapper.Map<Company>(company);
             _repository.CompanyRepository.CreateCompany(companyEntity);
             await _repository.SaveAsync();
@@ -91,8 +89,6 @@ namespace Service
 
         public async Task UpdateCompanyAsync(Guid id, CompanyForUpdateDto companyForUpdate, bool trackChanges)
         {
-            if (companyForUpdate is null)
-                throw new CompanyBadRequest();
             var companyToUpdate = await _repository.CompanyRepository.GetCompanyByIdAsync(id, trackChanges);
             if (companyToUpdate is null)
                 throw new CompanyNotFoundException(id);
