@@ -1,5 +1,6 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using CompanyEmployees.Presentation.ModelBinders;
+using Entities.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
 using Shared.DataTransferObjects;
@@ -39,20 +40,23 @@ namespace CompanyEmployees.Presentation.Controllers
             return Ok(result);
         }
 
-        [HttpPost]        
+        [HttpPost]
+        [DtoValidationFilter]
         public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreationDto company)
         {
-            if (!ModelState.IsValid)
-                return UnprocessableEntity(ModelState);
+         
             var companyDto = await _manager.CompanyService.CreateCompanyAsync(company);
             return CreatedAtRoute("CompanyById", new { id = companyDto.Id }, companyDto);
         }
 
-        [HttpPost("collection")]
+        [HttpPost("collection")]        
         [MaxCollectionSize(typeof(CompanyForCreationDto), 10)]
         public async Task<IActionResult> CreateCompanyCollection([FromBody] IEnumerable<CompanyForCreationDto> companies)
         {
-
+            if (companies is null)
+                throw new CompanyCollectionBadRequest();
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
             var result = await _manager.CompanyService.CreateCompanyCollectionAsync(companies);
             return CreatedAtRoute("CompanyCollection", new { result.ids }, result.companies);
         }
@@ -64,10 +68,9 @@ namespace CompanyEmployees.Presentation.Controllers
             return NoContent();
         }
         [HttpPut("{id:guid}")]
+        [DtoValidationFilter]
         public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] CompanyForUpdateDto company)
         {
-            if(!ModelState.IsValid)
-                return UnprocessableEntity(ModelState);
             await _manager.CompanyService.UpdateCompanyAsync(id, company, trackChanges: true);
             return NoContent();
         }

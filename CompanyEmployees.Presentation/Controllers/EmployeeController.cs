@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿using CompanyEmployees.Presentation.ActionFilters;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
 using Shared.DataTransferObjects;
@@ -29,13 +30,11 @@ namespace CompanyEmployees.Presentation.Controllers
             return Ok(result);
         }
         [HttpPost]
+        [DtoValidationFilter]
         public async Task<IActionResult> CreateEmployeeForCompany(Guid companyId, [FromBody] EmployeeForCreationDto employeeForCreationDto)
         {
-            if (!ModelState.IsValid)
-                return UnprocessableEntity(ModelState);
             var result = await _manager.EmployeeService.CreateEmployeeForCompanyAsync(companyId, employeeForCreationDto, trackChanges: false);
             return CreatedAtRoute("EmployeeById", new { companyId, id = result.Id }, result);
-
         }
 
         [HttpDelete("{id:guid}")]
@@ -46,16 +45,15 @@ namespace CompanyEmployees.Presentation.Controllers
         }
 
         [HttpPut("{id:guid}")]
+        [DtoValidationFilter]
         public async Task<IActionResult> UpdateEmployeeForCompany(Guid companyId, Guid id, [FromBody] EmployeeForUpdateDto employeeForUpdateDto)
         {
-            if (!ModelState.IsValid)
-                return UnprocessableEntity(ModelState);
             await _manager.EmployeeService.UpdateEmployeeForCompanyAsync(companyId, id, employeeForUpdateDto, comptrackChanges: false, empTrackChanges: true);
             return NoContent();
         }
 
         [HttpPatch("{id:guid}")]
-        public async Task<IActionResult> PatchEmployeeForCompany(Guid companyId, Guid id, [FromBody] JsonPatchDocument<EmployeeForUpdateDto> patchDoc)
+        public async Task<IActionResult> PatchEmployeeForCompany(Guid companyId, Guid id, [FromBody] JsonPatchDocument<EmployeeForPatchDto> patchDoc)
         {
             if (patchDoc is null)
                 return BadRequest("patchDoc object sent from client is null.");
