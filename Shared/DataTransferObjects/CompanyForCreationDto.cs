@@ -12,7 +12,7 @@ namespace Shared.DataTransferObjects
         [Required(ErrorMessage = "Company Adress is a required field")]
         [MaxLength(250, ErrorMessage = "Company Adresse must not exceed 250 chars")]
         public string Adress { get; init; }
-        [Required(ErrorMessage = "Company Adress is a required field")]
+        [Required(ErrorMessage = "Company Country is a required field")]
         [MaxLength(50, ErrorMessage = "Company Country must not exceed 50 chars")]
         //custom validation attribtue here
         [AllowedCountryEnum]

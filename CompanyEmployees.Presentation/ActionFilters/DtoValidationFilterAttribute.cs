@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Entities.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
 namespace CompanyEmployees.Presentation.ActionFilters
@@ -12,11 +13,21 @@ namespace CompanyEmployees.Presentation.ActionFilters
             var param = context.ActionArguments.SingleOrDefault(x => x.Value.ToString().Contains("Dto")).Value;
             if (param is null)
             {
-                context.Result = new BadRequestObjectResult($"Object is null. Controller:{controller}, action:{action} ");
-                return;
+                throw new DtoBadRequestNullException($"Object sent by client is null. Controller: {controller}, Action: {action}");
             }
+
             if (!context.ModelState.IsValid)
-                context.Result = new UnprocessableEntityObjectResult(context.ModelState);
+            {
+                var errors = context.ModelState
+                    .Where(ms => ms.Value.Errors.Count > 0)
+                    .ToDictionary(
+                        kvp => kvp.Key,
+                        kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                    );
+
+                throw new UnprocessableException(errors);
+            }
+
         }
     }
 }

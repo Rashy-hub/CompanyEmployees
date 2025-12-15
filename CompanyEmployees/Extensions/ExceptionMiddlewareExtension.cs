@@ -25,6 +25,7 @@ namespace CompanyEmployees.Extensions
                     {
                         NotFoundException => StatusCodes.Status404NotFound,
                         BadRequestException=> StatusCodes.Status400BadRequest,
+                        UnprocessableException => StatusCodes.Status422UnprocessableEntity,
                         _ => StatusCodes.Status500InternalServerError
                     };
                     logger.LogError($"Something Went Wrong : {contextFeature.Error}");
@@ -32,7 +33,8 @@ namespace CompanyEmployees.Extensions
                     await context.Response.WriteAsync(new ErrorDetail()
                     {
                         StatusCode = context.Response.StatusCode,
-                        Message=contextFeature.Error.Message
+                        Message=contextFeature.Error.Message,
+                        Errors = contextFeature.Error is UnprocessableException ue ? ue.Errors : null
 
                     }.ToString());
                     

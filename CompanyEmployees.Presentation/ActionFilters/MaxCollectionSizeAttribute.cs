@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Entities.Exceptions;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using System.Collections;
 
@@ -35,9 +36,8 @@ namespace CompanyEmployees.Presentation.ActionFilters
 
             if (count > _maxSize)
             {
-                context.Result = new BadRequestObjectResult(
-                    $"The collection of '{_expectedElementType.Name}' cannot exceed {_maxSize} items."
-                );
+                throw new CompanyCollectionBadRequest();
+
             }
         }
     }
