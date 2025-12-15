@@ -16,7 +16,7 @@ namespace Shared.Validators
             if (!Enum.TryParse(typeof(CountryEnum), value.ToString(), true, out _))
             {
                 return new ValidationResult(
-                    $"'{value}' is not a valid country."
+                    $"'{value}' is not a valid country.Allowed values: {string.Join(", ", Enum.GetNames(typeof(CountryEnum)))}"
                 );
             }
 
