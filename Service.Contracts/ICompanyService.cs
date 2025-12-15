@@ -1,4 +1,5 @@
-﻿using Shared.DataTransferObjects;
+﻿using Entities.Models;
+using Shared.DataTransferObjects;
 
 namespace Service.Contracts
 {
@@ -16,5 +17,8 @@ namespace Service.Contracts
         Task DeleteCompanyAsync(Guid id, bool trackChanges);
 
         Task UpdateCompanyAsync(Guid id, CompanyForUpdateDto company, bool trackChanges);
+
+        Task<(CompanyForPatchDto companyToPatch, Company companyEntity)> GetCompanyForPatchAsync(Guid id, bool trackChanges);
+        Task SaveChangesForPatchAsync(CompanyForPatchDto companyToPatch, Company companyEntity);
     }
 }

@@ -31,7 +31,7 @@ namespace Service
 
         public async Task<CompanyDto> GetCompanyByIdAsync(Guid id, bool trackChanges)
         {
-            var companyEntity = await  GetCompanyAndCheckIfItExists(id, trackChanges);
+            var companyEntity = await GetCompanyAndCheckIfItExists(id, trackChanges);
             var companyDto = _mapper.Map<CompanyDto>(companyEntity);
             return companyDto;
         }
@@ -99,5 +99,21 @@ namespace Service
                 throw new CompanyNotFoundException(id);
             return company;
         }
+
+        public async Task<(CompanyForPatchDto companyToPatch, Company companyEntity)> GetCompanyForPatchAsync(Guid id, bool trackChanges)
+        {
+            var companyEntity = await GetCompanyAndCheckIfItExists(id, trackChanges);
+            var companyToPatch = _mapper.Map<CompanyForPatchDto>(companyEntity);
+
+            return (companyToPatch: companyToPatch, companyEntity: companyEntity);
+        }
+
+        public async Task SaveChangesForPatchAsync(CompanyForPatchDto companyToPatch, Company companyEntity)
+        {
+            _mapper.Map(companyToPatch, companyEntity);
+            await _repository.SaveAsync();
+        }
+
+
     }
 }

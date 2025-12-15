@@ -1,4 +1,5 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
+using Entities.Exceptions;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
@@ -56,7 +57,7 @@ namespace CompanyEmployees.Presentation.Controllers
         public async Task<IActionResult> PatchEmployeeForCompany(Guid companyId, Guid id, [FromBody] JsonPatchDocument<EmployeeForPatchDto> patchDoc)
         {
             if (patchDoc is null)
-                return BadRequest("patchDoc object sent from client is null.");
+                throw new DtoBadRequestNullException("PatchDoc object sent by client is null");
             var result = await _manager.EmployeeService.GetEmployeeForPatchAsync(companyId, id, comptrackChanges: false, empTrackChanges: true);
             patchDoc.ApplyTo(result.employeeToPatch, ModelState);
             //check also if employeeToPatch is valid for entity

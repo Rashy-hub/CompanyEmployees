@@ -1,6 +1,7 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using CompanyEmployees.Presentation.ModelBinders;
 using Entities.Exceptions;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
 using Shared.DataTransferObjects;
@@ -74,6 +75,23 @@ namespace CompanyEmployees.Presentation.Controllers
             await _manager.CompanyService.UpdateCompanyAsync(id, company, trackChanges: true);
             return NoContent();
         }
+        [HttpPatch("{id:guid}")]
+        public async Task<IActionResult> PatchCompanyForCompany(Guid id, [FromBody] JsonPatchDocument<CompanyForPatchDto> patchDoc)
+        {
+            if (patchDoc is null)
+                throw new DtoBadRequestNullException("PatchDoc object sent by client is null");               
+            var result = await _manager.CompanyService.GetCompanyForPatchAsync(id, trackChanges:true);
+            patchDoc.ApplyTo(result.companyToPatch, ModelState);
+            //check also if employeeToPatch is valid for entity
+            TryValidateModel(result.companyToPatch);
+            if (!ModelState.IsValid)
+                return UnprocessableEntity(ModelState);
+
+            await _manager.CompanyService.SaveChangesForPatchAsync(result.companyToPatch, result.companyEntity);
+            return NoContent();
+        }
+
+
 
     }
 }
