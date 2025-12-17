@@ -39,6 +39,10 @@ builder.Services.ConfigureIISIntegration();
 
 builder.Services.ConfigureLoggerService();
 builder.Services.ConfigureSqlContext(builder.Configuration);
+//this is internally used by AspNetCoreRateLimit
+builder.Services.AddMemoryCache();
+builder.Services.ConfigureRateLimitingOptions();
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.ConfigureRepositoryManager();
 
