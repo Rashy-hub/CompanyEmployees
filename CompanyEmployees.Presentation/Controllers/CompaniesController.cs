@@ -1,10 +1,14 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using CompanyEmployees.Presentation.ModelBinders;
 using Entities.Exceptions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Primitives;
 using Service.Contracts;
 using Shared.DataTransferObjects;
+using Shared.RequestFeatures;
+using System.Text.Json;
 
 namespace CompanyEmployees.Presentation.Controllers
 {
@@ -18,12 +22,11 @@ namespace CompanyEmployees.Presentation.Controllers
             _manager = manager;
         }
         [HttpGet]
-        public async Task<IActionResult> GetCompanies()
+        public async Task<IActionResult> GetCompanies([FromQuery] CompanyParameters companyParameters)
         {
-
-            var result = await _manager.CompanyService.GetAllCompaniesAsync(false);
-            return Ok(result);
-
+            var result = await _manager.CompanyService.GetAllCompaniesAsync(companyParameters, false);
+            Response.Headers.Append("X-Pagination", new StringValues(JsonSerializer.Serialize(result.metaData)));
+            return Ok(result.companyDtos);
 
         }
         [HttpGet("{id:guid}", Name = "CompanyById")]
@@ -37,6 +40,7 @@ namespace CompanyEmployees.Presentation.Controllers
 
         public async Task<IActionResult> GetCompanies([ModelBinder(BinderType = typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
         {
+
             var result = await _manager.CompanyService.GetCompaniesByIdsAsync(ids, false);
             return Ok(result);
         }
@@ -45,12 +49,12 @@ namespace CompanyEmployees.Presentation.Controllers
         [DtoValidationFilter]
         public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreationDto company)
         {
-         
+
             var companyDto = await _manager.CompanyService.CreateCompanyAsync(company);
             return CreatedAtRoute("CompanyById", new { id = companyDto.Id }, companyDto);
         }
 
-        [HttpPost("collection")]        
+        [HttpPost("collection")]
         [MaxCollectionSize(typeof(CompanyForCreationDto), 10)]
         public async Task<IActionResult> CreateCompanyCollection([FromBody] IEnumerable<CompanyForCreationDto> companies)
         {
@@ -79,8 +83,8 @@ namespace CompanyEmployees.Presentation.Controllers
         public async Task<IActionResult> PatchCompanyForCompany(Guid id, [FromBody] JsonPatchDocument<CompanyForPatchDto> patchDoc)
         {
             if (patchDoc is null)
-                throw new DtoBadRequestNullException("PatchDoc object sent by client is null");               
-            var result = await _manager.CompanyService.GetCompanyForPatchAsync(id, trackChanges:true);
+                throw new DtoBadRequestNullException("PatchDoc object sent by client is null");
+            var result = await _manager.CompanyService.GetCompanyForPatchAsync(id, trackChanges: true);
             patchDoc.ApplyTo(result.companyToPatch, ModelState);
             //check also if employeeToPatch is valid for entity
             TryValidateModel(result.companyToPatch);
