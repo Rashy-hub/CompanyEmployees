@@ -13,7 +13,7 @@ namespace CompanyEmployees.Presentation.Controllers
 {
     [Route("api/companies/{companyId}/employees")]
     [ApiController]
-    [ResponseCache(CacheProfileName = "DefaultCacheProfile")]
+    //[ResponseCache(CacheProfileName = "DefaultCacheProfile")]
     public class EmployeesController : ControllerBase
     {
         private readonly IServiceManager _manager;
@@ -22,8 +22,7 @@ namespace CompanyEmployees.Presentation.Controllers
             _manager = manager;
         }
 
-        [HttpGet]
-        [HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 60)]
+        [HttpGet]      
         [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetEmployees(Guid companyId, [FromQuery] EmployeeParameters employeeParameters)
         {
@@ -32,6 +31,7 @@ namespace CompanyEmployees.Presentation.Controllers
             return Ok(result.employeeDtos);
         }
         [HttpGet("{id:guid}", Name = "EmployeeById")]
+        [HttpCacheExpiration(CacheLocation = CacheLocation.Private, MaxAge = 60)]
         public async Task<IActionResult> GetEmployeeForCompany(Guid companyId, Guid id)
         {
 

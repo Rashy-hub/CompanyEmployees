@@ -21,7 +21,7 @@ builder.Services.AddControllers(options =>
 {
     options.RespectBrowserAcceptHeader = true;
     options.ReturnHttpNotAcceptable = true;
-    options.CacheProfiles.Add("DefaultCacheProfile", new CacheProfile { Duration = 120 , Location=ResponseCacheLocation.Client, VaryByQueryKeys = new[] { "pageNumber", "pageSize" } });
+   // options.CacheProfiles.Add("DefaultCacheProfile", new CacheProfile { Duration = 120 , Location=ResponseCacheLocation.Client, VaryByQueryKeys = new[] { "pageNumber", "pageSize" } });
 })
 .AddNewtonsoftJson()                     // nécessaire pour JSON Patch
 .AddNewtonsoftJsonPatchSupport()         // methode d'extension patch document formatter
@@ -70,8 +70,8 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 app.UseCors("CorsPolicy");
-app.UseResponseCaching();
-app.UseHttpCacheHeaders();
+    app.UseResponseCaching();
+    app.UseHttpCacheHeaders();
 
 app.UseAuthorization();
 

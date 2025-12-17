@@ -61,11 +61,15 @@ namespace CompanyEmployees.Extensions
             services.AddHttpCacheHeaders((expirationOptions) =>
             {
                 expirationOptions.MaxAge = 65;
-                expirationOptions.CacheLocation = CacheLocation.Private;
+                expirationOptions.CacheLocation = CacheLocation.Public;
             }, (validationModelOptions) =>
             {
                 validationModelOptions.MustRevalidate = true;
-            });
+            },
+             (middlewareOptions) =>
+             {
+                 middlewareOptions.IgnoredStatusCodes = new[] { 500 };
+             });
         }
     }
 }
