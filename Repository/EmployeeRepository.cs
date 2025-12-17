@@ -1,6 +1,7 @@
 ﻿using Contracts;
 using Entities.Models;
 using Microsoft.EntityFrameworkCore;
+using Repository.Extensions;
 using Shared.RequestFeatures;
 
 namespace Repository
@@ -11,9 +12,14 @@ namespace Repository
         {
         }
 
-        public async Task<PagedList<Employee>> GetEmployeesAsync(Guid companyId,EmployeeParameters employeeParameters, bool trackChanges)
+        public async Task<PagedList<Employee>> GetEmployeesAsync(Guid companyId, EmployeeParameters employeeParameters, bool trackChanges)
         {
-            var employeeEntities= await base.FindByCondition(e => e.CompanyId.Equals(companyId) && e.Age>=employeeParameters.MinAge && e.Age<=employeeParameters.MaxAge , trackChanges).Skip((employeeParameters.pageNumber-1)*employeeParameters.pageSize).Take(employeeParameters.pageSize).ToListAsync();
+            var employeeEntities = await base.FindByCondition(e => e.CompanyId.Equals(companyId), trackChanges)
+                                            .FilterEmployeesByAge(employeeParameters.MinAge, employeeParameters.MaxAge)
+                                            .SearchByName(employeeParameters.SearchedTerm)
+                                            .Skip((employeeParameters.pageNumber - 1) * employeeParameters.pageSize)
+                                            .Take(employeeParameters.pageSize).ToListAsync();
+
             var employeeCount = await base.FindByCondition(e => e.CompanyId.Equals(companyId), trackChanges).CountAsync();
             return new PagedList<Employee>(employeeEntities, employeeCount, employeeParameters.pageNumber, employeeParameters.pageSize);
         }
