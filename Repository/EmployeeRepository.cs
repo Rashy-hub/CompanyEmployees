@@ -13,8 +13,8 @@ namespace Repository
 
         public async Task<PagedList<Employee>> GetEmployeesAsync(Guid companyId,EmployeeParameters employeeParameters, bool trackChanges)
         {
-            var employeeEntities= await base.FindByCondition(c => c.CompanyId.Equals(companyId), trackChanges).Skip((employeeParameters.pageNumber-1)*employeeParameters.pageSize).Take(employeeParameters.pageSize).ToListAsync();
-            var employeeCount = await base.FindByCondition(c => c.CompanyId.Equals(companyId), trackChanges).CountAsync();
+            var employeeEntities= await base.FindByCondition(e => e.CompanyId.Equals(companyId) && e.Age>=employeeParameters.MinAge && e.Age<=employeeParameters.MaxAge , trackChanges).Skip((employeeParameters.pageNumber-1)*employeeParameters.pageSize).Take(employeeParameters.pageSize).ToListAsync();
+            var employeeCount = await base.FindByCondition(e => e.CompanyId.Equals(companyId), trackChanges).CountAsync();
             return new PagedList<Employee>(employeeEntities, employeeCount, employeeParameters.pageNumber, employeeParameters.pageSize);
         }
 
