@@ -1,6 +1,7 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using CompanyEmployees.Presentation.ModelBinders;
 using Entities.Exceptions;
+using Marvin.Cache.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,7 @@ namespace CompanyEmployees.Presentation.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [ResponseCache(CacheProfileName = "DefaultCacheProfile")]
     public class CompaniesController : ControllerBase
     {
         private readonly IServiceManager _manager;
@@ -22,6 +24,8 @@ namespace CompanyEmployees.Presentation.Controllers
             _manager = manager;
         }
         [HttpGet]
+        [HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 60)]
+        [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetCompanies([FromQuery] CompanyParameters companyParameters)
         {
             var result = await _manager.CompanyService.GetAllCompaniesAsync(companyParameters, false);
@@ -37,7 +41,8 @@ namespace CompanyEmployees.Presentation.Controllers
         }
 
         [HttpGet("collection/{ids?}", Name = "CompanyCollection")]
-
+        [HttpCacheExpiration(CacheLocation = CacheLocation.Private, MaxAge = 60)]
+        [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetCompanies([ModelBinder(BinderType = typeof(ArrayModelBinder))] IEnumerable<Guid> ids)
         {
 

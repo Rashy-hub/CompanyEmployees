@@ -1,5 +1,6 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using Entities.Exceptions;
+using Marvin.Cache.Headers;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -12,6 +13,7 @@ namespace CompanyEmployees.Presentation.Controllers
 {
     [Route("api/companies/{companyId}/employees")]
     [ApiController]
+    [ResponseCache(CacheProfileName = "DefaultCacheProfile")]
     public class EmployeesController : ControllerBase
     {
         private readonly IServiceManager _manager;
@@ -21,6 +23,8 @@ namespace CompanyEmployees.Presentation.Controllers
         }
 
         [HttpGet]
+        [HttpCacheExpiration(CacheLocation = CacheLocation.Public, MaxAge = 60)]
+        [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetEmployees(Guid companyId, [FromQuery] EmployeeParameters employeeParameters)
         {
             var result = await _manager.EmployeeService.GetEmployeesAsync(companyId,employeeParameters, false);

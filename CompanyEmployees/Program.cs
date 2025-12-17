@@ -1,12 +1,7 @@
-
-
-using CompanyEmployees;
 using CompanyEmployees.Extensions;
 using Contracts;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Formatters;
-using Microsoft.Extensions.Options;
 using NLog;
 using Service.MapperProfiles;
 
@@ -26,6 +21,7 @@ builder.Services.AddControllers(options =>
 {
     options.RespectBrowserAcceptHeader = true;
     options.ReturnHttpNotAcceptable = true;
+    options.CacheProfiles.Add("DefaultCacheProfile", new CacheProfile { Duration = 120 , Location=ResponseCacheLocation.Client, VaryByQueryKeys = new[] { "pageNumber", "pageSize" } });
 })
 .AddNewtonsoftJson()                     // nécessaire pour JSON Patch
 .AddNewtonsoftJsonPatchSupport()         // methode d'extension patch document formatter
@@ -33,6 +29,9 @@ builder.Services.AddControllers(options =>
 .AddCustomOutputFormatter()
 .AddApplicationPart(typeof(CompanyEmployees.Presentation.AssemblyReference).Assembly);
 
+
+builder.Services.ConfigureResponseCaching();
+builder.Services.ConfigureHttpCacheHeaders();
 builder.Services.Configure<ApiBehaviorOptions>(options => options.SuppressModelStateInvalidFilter = true);
 builder.Services.ConfigureCors();
 
@@ -43,7 +42,7 @@ builder.Services.ConfigureSqlContext(builder.Configuration);
 
 builder.Services.ConfigureRepositoryManager();
 
-builder.Services.AddAutoMapper(cfg=>cfg.AddMaps(typeof(MapperConfig)),typeof(MapperConfig).Assembly); // scan de l'assembly);
+builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(MapperConfig)), typeof(MapperConfig).Assembly); // scan de l'assembly);
 
 builder.Services.ConfigureServiceManager();
 
@@ -59,7 +58,7 @@ app.ConfigureExceptionHandler(logger);
 
 // Configure the HTTP request pipeline.
 
-if (app.Environment.IsProduction()) 
+if (app.Environment.IsProduction())
     app.UseHsts();
 
 app.UseHttpsRedirection();
@@ -67,10 +66,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseForwardedHeaders(new ForwardedHeadersOptions
 {
-    ForwardedHeaders=ForwardedHeaders.All,
+    ForwardedHeaders = ForwardedHeaders.All,
 });
 
 app.UseCors("CorsPolicy");
+app.UseResponseCaching();
+app.UseHttpCacheHeaders();
 
 app.UseAuthorization();
 
