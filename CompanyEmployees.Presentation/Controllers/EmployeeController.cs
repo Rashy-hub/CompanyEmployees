@@ -1,9 +1,12 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using Entities.Exceptions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Service.Contracts;
 using Shared.DataTransferObjects;
+using Shared.RequestFeatures;
+using System.Text.Json;
 
 namespace CompanyEmployees.Presentation.Controllers
 {
@@ -18,10 +21,11 @@ namespace CompanyEmployees.Presentation.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetEmployees(Guid companyId)
+        public async Task<IActionResult> GetEmployees(Guid companyId, [FromQuery] EmployeeParameters employeeParameters)
         {
-            var result = await _manager.EmployeeService.GetEmployeesAsync(companyId, false);
-            return Ok(result);
+            var result = await _manager.EmployeeService.GetEmployeesAsync(companyId,employeeParameters, false);
+            Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(result.metaData));
+            return Ok(result.employeeDtos);
         }
         [HttpGet("{id:guid}", Name = "EmployeeById")]
         public async Task<IActionResult> GetEmployeeForCompany(Guid companyId, Guid id)
