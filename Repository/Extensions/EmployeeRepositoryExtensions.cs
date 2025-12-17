@@ -1,4 +1,6 @@
 ﻿using Entities.Models;
+using Repository.Extensions.Utility;
+using System.Linq.Dynamic.Core;
 
 
 namespace Repository.Extensions
@@ -16,5 +18,17 @@ namespace Repository.Extensions
             var lowerSearchTerm = SearchTerm.Trim().ToLower();
             return employees.Where(e => e.Name.ToLower().Contains(SearchTerm));
         }
+
+        public static IQueryable<Employee> OrderByForEmployee(this IQueryable<Employee> employees, string OrderByQueryString)
+        {
+            if (string.IsNullOrWhiteSpace(OrderByQueryString))
+                return employees.OrderBy(e => e.Name);
+            var orderQuery = OrderByQueryBuilder.CreateOrderByQuery<Employee>(OrderByQueryString);
+            if (string.IsNullOrWhiteSpace(orderQuery))
+                return employees.OrderBy(e => e.Name);
+            return employees.OrderBy(orderQuery);
+        }
+
     }
 }
+
