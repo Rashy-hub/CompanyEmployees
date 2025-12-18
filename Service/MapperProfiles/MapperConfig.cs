@@ -50,6 +50,9 @@ namespace Service.MapperProfiles
             // PATCH reverse mappings (Entity -> PatchDto)
             CreateMap<Company, CompanyForPatchDto>();
             CreateMap<Employee, EmployeeForPatchDto>();
+
+            // For User Registration
+            CreateMap<UserForRegistrationDto, User>();
         }
     }
 }
