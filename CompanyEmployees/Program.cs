@@ -49,6 +49,7 @@ builder.Services.ConfigureRepositoryManager();
 builder.Services.AddAutoMapper(cfg => cfg.AddMaps(typeof(MapperConfig)), typeof(MapperConfig).Assembly); // scan de l'assembly);
 
 builder.Services.ConfigureServiceManager();
+builder.Services.ConfigureIdentity();
 
 var app = builder.Build();
 
@@ -77,6 +78,7 @@ app.UseCors("CorsPolicy");
     app.UseResponseCaching();
     app.UseHttpCacheHeaders();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
