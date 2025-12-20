@@ -5,13 +5,13 @@ using Shared.DataTransferObjects;
 
 namespace CompanyEmployees.Presentation.Controllers
 {
-    
+
     [ApiController]
     [Route("api/authentication")]
-    public class UsersController:ControllerBase
+    public class UsersController : ControllerBase
     {
         private readonly IServiceManager _service;
-        public UsersController(IServiceManager service) 
+        public UsersController(IServiceManager service)
         {
             _service = service;
         }
@@ -20,8 +20,8 @@ namespace CompanyEmployees.Presentation.Controllers
         [DtoValidationFilter]
         public async Task<IActionResult> RegisterUser([FromBody] UserForRegistrationDto userForRegistration)
         {
-            var identityUser=await _service.AuthenticationService.RegisterUser(userForRegistration);
-            if(!identityUser.Succeeded)
+            var identityUser = await _service.AuthenticationService.RegisterUser(userForRegistration);
+            if (!identityUser.Succeeded)
             {
                 foreach (var error in identityUser.Errors)
                 {
@@ -30,6 +30,18 @@ namespace CompanyEmployees.Presentation.Controllers
                 return BadRequest(ModelState);
             }
             return StatusCode(201);
+        }
+
+        [HttpPost("login")]
+        [DtoValidationFilter]
+        public async Task<IActionResult> Authenticate([FromBody] UserForAuthenticationDto user)
+        {
+            if (!await _service.AuthenticationService.ValidateUser(user))
+                return Unauthorized();
+            return Ok(new
+            {
+                Token = await _service.AuthenticationService.CreateToken()
+            });
         }
     }
 }

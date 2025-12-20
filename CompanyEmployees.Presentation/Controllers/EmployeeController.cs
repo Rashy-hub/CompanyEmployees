@@ -1,6 +1,7 @@
 ﻿using CompanyEmployees.Presentation.ActionFilters;
 using Entities.Exceptions;
 using Marvin.Cache.Headers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ using System.Text.Json;
 
 namespace CompanyEmployees.Presentation.Controllers
 {
+    [Authorize]
     [Route("api/companies/{companyId}/employees")]
     [ApiController]
     //[ResponseCache(CacheProfileName = "DefaultCacheProfile")]
@@ -21,7 +23,7 @@ namespace CompanyEmployees.Presentation.Controllers
         {
             _manager = manager;
         }
-
+        [AllowAnonymous]
         [HttpGet]      
         [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetEmployees(Guid companyId, [FromQuery] EmployeeParameters employeeParameters)
@@ -30,6 +32,7 @@ namespace CompanyEmployees.Presentation.Controllers
             Response.Headers.Append("X-Pagination", JsonSerializer.Serialize(result.metaData));
             return Ok(result.employeeDtos);
         }
+        [AllowAnonymous]
         [HttpGet("{id:guid}", Name = "EmployeeById")]
         [HttpCacheExpiration(CacheLocation = CacheLocation.Private, MaxAge = 60)]
         public async Task<IActionResult> GetEmployeeForCompany(Guid companyId, Guid id)
@@ -38,6 +41,7 @@ namespace CompanyEmployees.Presentation.Controllers
             var result = await _manager.EmployeeService.GetEmployeeAsync(companyId, id, false);
             return Ok(result);
         }
+        [Authorize(Roles = "Admin,Manager")]
         [HttpPost]
         [DtoValidationFilter]
         public async Task<IActionResult> CreateEmployeeForCompany(Guid companyId, [FromBody] EmployeeForCreationDto employeeForCreationDto)
@@ -45,14 +49,14 @@ namespace CompanyEmployees.Presentation.Controllers
             var result = await _manager.EmployeeService.CreateEmployeeForCompanyAsync(companyId, employeeForCreationDto, trackChanges: false);
             return CreatedAtRoute("EmployeeById", new { companyId, id = result.Id }, result);
         }
-
+        [Authorize(Roles = "Admin,Manager")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteEmployeeForCompany(Guid companyId, Guid id)
         {
             await _manager.EmployeeService.DeleteEmployeeForCompanyAsync(companyId, id, trackChanges: false);
             return NoContent();
         }
-
+        [Authorize(Roles = "Admin,Manager")]
         [HttpPut("{id:guid}")]
         [DtoValidationFilter]
         public async Task<IActionResult> UpdateEmployeeForCompany(Guid companyId, Guid id, [FromBody] EmployeeForUpdateDto employeeForUpdateDto)
@@ -60,7 +64,7 @@ namespace CompanyEmployees.Presentation.Controllers
             await _manager.EmployeeService.UpdateEmployeeForCompanyAsync(companyId, id, employeeForUpdateDto, comptrackChanges: false, empTrackChanges: true);
             return NoContent();
         }
-
+        [Authorize(Roles = "Admin,Manager")]
         [HttpPatch("{id:guid}")]
         public async Task<IActionResult> PatchEmployeeForCompany(Guid companyId, Guid id, [FromBody] JsonPatchDocument<EmployeeForPatchDto> patchDoc)
         {

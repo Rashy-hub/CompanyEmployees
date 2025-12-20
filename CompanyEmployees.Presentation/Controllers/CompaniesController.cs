@@ -2,6 +2,7 @@
 using CompanyEmployees.Presentation.ModelBinders;
 using Entities.Exceptions;
 using Marvin.Cache.Headers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +14,7 @@ using System.Text.Json;
 
 namespace CompanyEmployees.Presentation.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     //[ResponseCache(CacheProfileName = "DefaultCacheProfile")]
@@ -23,6 +25,7 @@ namespace CompanyEmployees.Presentation.Controllers
         {
             _manager = manager;
         }
+        [AllowAnonymous]
         [HttpGet]
         [HttpCacheValidation(MustRevalidate = false)]
         public async Task<IActionResult> GetCompanies([FromQuery] CompanyParameters companyParameters)
@@ -32,6 +35,7 @@ namespace CompanyEmployees.Presentation.Controllers
             return Ok(result.companyDtos);
 
         }
+        [AllowAnonymous]
         [HttpGet("{id:guid}", Name = "CompanyById")]
         [HttpCacheExpiration(CacheLocation = CacheLocation.Private, MaxAge = 60)]
         public async Task<IActionResult> GetCompany(Guid id)
@@ -39,7 +43,7 @@ namespace CompanyEmployees.Presentation.Controllers
             var result = await _manager.CompanyService.GetCompanyByIdAsync(id, false);
             return Ok(result);
         }
-
+        [AllowAnonymous]
         [HttpGet("collection/{ids?}", Name = "CompanyCollection")]
         [HttpCacheExpiration(CacheLocation = CacheLocation.Private, MaxAge = 60)]
         [HttpCacheValidation(MustRevalidate = false)]
@@ -49,7 +53,7 @@ namespace CompanyEmployees.Presentation.Controllers
             var result = await _manager.CompanyService.GetCompaniesByIdsAsync(ids, false);
             return Ok(result);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [DtoValidationFilter]
         public async Task<IActionResult> CreateCompany([FromBody] CompanyForCreationDto company)
@@ -58,7 +62,7 @@ namespace CompanyEmployees.Presentation.Controllers
             var companyDto = await _manager.CompanyService.CreateCompanyAsync(company);
             return CreatedAtRoute("CompanyById", new { id = companyDto.Id }, companyDto);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpPost("collection")]
         [MaxCollectionSize(typeof(CompanyForCreationDto), 10)]
         public async Task<IActionResult> CreateCompanyCollection([FromBody] IEnumerable<CompanyForCreationDto> companies)
@@ -70,13 +74,14 @@ namespace CompanyEmployees.Presentation.Controllers
             var result = await _manager.CompanyService.CreateCompanyCollectionAsync(companies);
             return CreatedAtRoute("CompanyCollection", new { result.ids }, result.companies);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteCompany(Guid id)
         {
             await _manager.CompanyService.DeleteCompanyAsync(id, trackChanges: false);
             return NoContent();
         }
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id:guid}")]
         [DtoValidationFilter]
         public async Task<IActionResult> UpdateCompany(Guid id, [FromBody] CompanyForUpdateDto company)
@@ -84,6 +89,7 @@ namespace CompanyEmployees.Presentation.Controllers
             await _manager.CompanyService.UpdateCompanyAsync(id, company, trackChanges: true);
             return NoContent();
         }
+        [Authorize(Roles = "Admin")]
         [HttpPatch("{id:guid}")]
         public async Task<IActionResult> PatchCompanyForCompany(Guid id, [FromBody] JsonPatchDocument<CompanyForPatchDto> patchDoc)
         {
