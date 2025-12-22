@@ -1,5 +1,6 @@
 ﻿using AspNetCoreRateLimit;
 using Contracts;
+using Entities.ConfigurationModels;
 using Entities.Models;
 using LoggerService;
 using Marvin.Cache.Headers;
@@ -110,8 +111,11 @@ namespace CompanyEmployees.Extensions
         }
         public static void ConfigureJWT(this IServiceCollection services, IConfiguration configuration)
         {
-            var jwtSettings = configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["Secret"];
+           
+            var jwtConfiguration = new JwtConfiguration();
+            configuration.GetSection(JwtConfiguration.Section).Bind(jwtConfiguration);           
+          
+            var secretKey = jwtConfiguration.Secret;
 
             if (string.IsNullOrWhiteSpace(secretKey))
                 throw new Exception("JWT Secret is missing");
@@ -129,8 +133,8 @@ namespace CompanyEmployees.Extensions
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
-                    ValidIssuer = jwtSettings["validIssuer"],
-                    ValidAudience = jwtSettings["validAudience"],
+                    ValidIssuer = jwtConfiguration.ValidIssuer,
+                    ValidAudience = jwtConfiguration.ValidAudience,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
             });
