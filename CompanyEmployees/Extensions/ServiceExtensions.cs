@@ -7,6 +7,7 @@ using Marvin.Cache.Headers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Repository;
 using Service;
 using Service.Contracts;
@@ -111,10 +112,10 @@ namespace CompanyEmployees.Extensions
         }
         public static void ConfigureJWT(this IServiceCollection services, IConfiguration configuration)
         {
-           
+
             var jwtConfiguration = new JwtConfiguration();
-            configuration.GetSection(JwtConfiguration.Section).Bind(jwtConfiguration);           
-          
+            configuration.GetSection(JwtConfiguration.Section).Bind(jwtConfiguration);
+
             var secretKey = jwtConfiguration.Secret;
 
             if (string.IsNullOrWhiteSpace(secretKey))
@@ -137,6 +138,45 @@ namespace CompanyEmployees.Extensions
                     ValidAudience = jwtConfiguration.ValidAudience,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
                 };
+            });
+        }
+
+        public static void ConfigureSwagger(this IServiceCollection services)
+        {
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Company Employees API",
+                    Version = "v1",
+                    Description = "ASP.NET Core Web API"
+                });
+
+                //  JWT Bearer configuration
+                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "Bearer",
+                    BearerFormat = "JWT",
+                    In = ParameterLocation.Header,
+                    Description = "Enter 'Bearer {your JWT token}'"
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
             });
         }
 

@@ -52,6 +52,7 @@ builder.Services.ConfigureServiceManager();
 builder.Services.AddAuthentication();
 builder.Services.ConfigureIdentity();
 builder.Services.ConfigureJWT(builder.Configuration);
+builder.Services.ConfigureSwagger();
 
 var app = builder.Build();
 
@@ -68,6 +69,7 @@ app.ConfigureExceptionHandler(logger);
 if (app.Environment.IsProduction())
     app.UseHsts();
 
+
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
@@ -82,6 +84,15 @@ app.UseCors("CorsPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Company Employees API v1");
+    });
+}
 
 app.MapControllers();
 
